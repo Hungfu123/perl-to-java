@@ -11,6 +11,9 @@ import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.ejb.EJB;
@@ -224,5 +227,30 @@ public class CustomServerHandler extends SimpleChannelUpstreamHandler {
       LOGGER.error("Error while sending POST request to Perl App", e);
     }
     return responseBody;
+  }
+
+  List <Object> getTbnbList() {
+    String url= "DBI:mysql:database=shareddb;host=db;port=3306";
+    String user= "root";
+    String password= "root";
+    List<Object> tnbList= new ArrayList<>();
+    LOGGER.info("Fetching TNB list from the database");
+    try(Connection db = DriverManager.getConnection(url, user, password)) {
+        PreparedStatement sth  = db.prepareStatement("SELECT * FROM tnbs");
+
+      ResultSet resultSet= sth.executeQuery();
+      int count = resultSet.getMetaData().getColumnCount();
+      while (resultSet.next()) {
+            for(int i= 1; i<= count; i++) {
+                tnbList.add(resultSet.getObject(i));
+            }
+      }
+
+    } catch (SQLException e) {
+
+
+      throw new RuntimeException(e);
+    }
+    return tnbList;
   }
 }
